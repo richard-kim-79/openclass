@@ -1,0 +1,40 @@
+{
+  "name": "openclass",
+  "version": "1.0.0",
+  "private": true,
+  "workspaces": [
+    "frontend",
+    "backend",
+    "shared"
+  ],
+  "scripts": {
+    "dev": "concurrently \"npm run dev:frontend\" \"npm run dev:backend\"",
+    "dev:frontend": "npm run dev --workspace=frontend",
+    "dev:backend": "npm run dev --workspace=backend",
+    "build": "npm run build --workspace=frontend && npm run build --workspace=backend",
+    "start": "npm run start --workspace=backend",
+    "lint": "npm run lint --workspace=frontend && npm run lint --workspace=backend",
+    "type-check": "npm run type-check --workspace=frontend && npm run type-check --workspace=backend",
+    "setup": "npm install && npm run setup:frontend && npm run setup:backend",
+    "setup:frontend": "cd frontend && npm install",
+    "setup:backend": "cd backend && npm install && npm run db:generate",
+    "db:setup": "cd backend && npm run db:push && npm run db:seed",
+    "deploy": "./deploy.sh",
+    "setup:deploy": "./setup-deployment.sh",
+    "docker:build": "docker build -t openclass-backend -f Dockerfile.backend . && docker build -t openclass-frontend -f Dockerfile.frontend .",
+    "docker:up": "docker-compose up -d",
+    "docker:down": "docker-compose down",
+    "migrate:prod": "./migrate-production.sh",
+    "setup:vector": "./setup-vector-search.sh",
+    "vector:health": "curl http://localhost:5001/api/search/health",
+    "vector:test": "cd backend && node -e \"console.log('🧪 Vector search test - OpenAI API:', process.env.OPENAI_API_KEY ? 'configured' : 'missing')\"",
+    "install:deps": "./install-dependencies.sh",
+    "test:build": "./test-build.sh",
+    "quality:check": "./quality-check.sh",
+    "fix:all": "./fix-all.sh"
+  },
+  "devDependencies": {
+    "concurrently": "^8.2.0",
+    "typescript": "^5.0.0"
+  }
+}

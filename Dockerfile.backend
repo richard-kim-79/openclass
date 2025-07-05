@@ -1,0 +1,24 @@
+# OpenClass Backend Dockerfile with pgvector support
+FROM node:18-alpine
+
+# Install PostgreSQL client and development tools for pgvector
+RUN apk add --no-cache postgresql-dev g++ make python3
+
+# 작업 디렉토리 설정
+WORKDIR /app
+
+# 패키지 파일 복사 및 의존성 설치
+COPY backend/package*.json ./
+RUN npm ci --only=production
+
+# 백엔드 소스 코드 복사
+COPY backend/ .
+
+# Prisma 생성
+RUN npx prisma generate
+
+# 포트 설정
+EXPOSE 5001
+
+# 서버 실행
+CMD ["npm", "start"]

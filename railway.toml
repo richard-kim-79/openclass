@@ -1,0 +1,18 @@
+[build]
+builder = "nixpacks"
+
+[deploy]
+healthcheckPath = "/health"
+healthcheckTimeout = 300
+restartPolicyType = "never"
+startCommand = "npm start"
+
+[[services]]
+name = "backend"
+source = "backend"
+
+[environments.production.variables]
+NODE_ENV = "production"
+PORT = "5001"
+POSTGRES_EXTENSIONS = "vector"
+SHARED_PRELOAD_LIBRARIES = "vector"

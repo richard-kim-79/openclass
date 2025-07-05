@@ -1,0 +1,21 @@
+# OpenClass Frontend Dockerfile
+FROM node:18-alpine
+
+# 작업 디렉토리 설정
+WORKDIR /app
+
+# 패키지 파일 복사 및 의존성 설치
+COPY frontend/package*.json ./
+RUN npm ci --only=production
+
+# 프론트엔드 소스 코드 복사
+COPY frontend/ .
+
+# Next.js 빌드
+RUN npm run build
+
+# 포트 설정
+EXPOSE 3000
+
+# 서버 실행
+CMD ["npm", "start"]

@@ -1,0 +1,253 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id            String   @id @default(cuid())
+  email         String   @unique
+  password      String?  // 소셜 로그인 사용자는 null
+  name          String
+  firstName     String?
+  lastName      String?
+  bio           String?
+  avatarUrl     String?
+  provider      String?  // 'google', 'naver', 'kakao'
+  providerId    String?  // 소셜 서비스의 고유 ID
+  apiKey        String   @unique @default(cuid())
+  subscription  String   @default("free")
+  role          String   @default("student")
+  isActive      Boolean  @default(true)
+  isVerified    Boolean  @default(false)
+  lastLoginAt   DateTime?
+  refreshToken  String?
+  resetToken    String?
+  resetTokenExpiresAt DateTime?
+  isOnline      Boolean  @default(false)
+  lastSeenAt    DateTime?
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  // Relations
+  apiUsage           ApiUsage[]
+  ownedClassrooms    Classroom[] @relation("ClassroomOwner")
+  memberships        ClassroomMembership[]
+  posts              Post[]
+  messages           Message[]
+  likes              Like[]
+  classroomLikes     ClassroomLike[]
+  uploadedFiles      File[]
+  messageReads       MessageRead[]
+  messageReactions   MessageReaction[]
+
+  @@map("users")
+}
+
+model ApiUsage {
+  id           String   @id @default(cuid())
+  userId       String
+  apiKey       String
+  endpoint     String
+  method       String
+  statusCode   Int
+  responseTime Int?     // milliseconds
+  userAgent    String?
+  ipAddress    String?
+  createdAt    DateTime @default(now())
+
+  // Relations
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  @@map("api_usage")
+}
+
+model Classroom {
+  id          String   @id @default(cuid())
+  name        String
+  description String?
+  category    String
+  level       String   @default("beginner")
+  ownerId     String
+  isPublic    Boolean  @default(true)
+  allowChat   Boolean  @default(true)
+  likesCount  Int      @default(0)
+  memberCount Int      @default(0)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  // Relations
+  owner       User     @relation("ClassroomOwner", fields: [ownerId], references: [id])
+  memberships ClassroomMembership[]
+  posts       Post[]
+  messages    Message[]
+  likes       ClassroomLike[]
+  
+  @@map("classrooms")
+}
+
+model ClassroomMembership {
+  id          String   @id @default(cuid())
+  userId      String
+  classroomId String
+  role        String   @default("student")
+  joinedAt    DateTime @default(now())
+
+  // Relations
+  user        User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  classroom   Classroom @relation(fields: [classroomId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, classroomId])
+  @@map("classroom_memberships")
+}
+
+model Post {
+  id          String   @id @default(cuid())
+  title       String
+  content     String?
+  authorId    String
+  classroomId String?
+  type        String   @default("document")
+  fileUrl     String?
+  fileName    String?
+  fileSize    Int?
+  tags        String   // JSON string
+  likesCount  Int      @default(0)
+  viewsCount  Int      @default(0)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  // Relations
+  author      User      @relation(fields: [authorId], references: [id], onDelete: Cascade)
+  classroom   Classroom? @relation(fields: [classroomId], references: [id], onDelete: SetNull)
+  likes       Like[]
+  
+  @@map("posts")
+}
+
+model Message {
+  id          String   @id @default(cuid())
+  content     String
+  authorId    String
+  classroomId String
+  type        String   @default("text")
+  fileUrl     String?
+  fileName    String?
+  fileSize    Int?
+  isEdited    Boolean  @default(false)
+  editedAt    DateTime?
+  isDeleted   Boolean  @default(false)
+  deletedAt   DateTime?
+  replyToId   String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  // Relations
+  author      User      @relation(fields: [authorId], references: [id], onDelete: Cascade)
+  classroom   Classroom @relation(fields: [classroomId], references: [id], onDelete: Cascade)
+  replyTo     Message?  @relation("MessageReply", fields: [replyToId], references: [id], onDelete: SetNull)
+  replies     Message[] @relation("MessageReply")
+  reads       MessageRead[]
+  reactions   MessageReaction[]
+  
+  @@map("messages")
+}
+
+model MessageRead {
+  id        String   @id @default(cuid())
+  userId    String
+  messageId String
+  readAt    DateTime @default(now())
+
+  // Relations
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  message   Message  @relation(fields: [messageId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, messageId])
+  @@map("message_reads")
+}
+
+model MessageReaction {
+  id        String   @id @default(cuid())
+  userId    String
+  messageId String
+  emoji     String
+  createdAt DateTime @default(now())
+
+  // Relations
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  message   Message  @relation(fields: [messageId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, messageId, emoji])
+  @@map("message_reactions")
+}
+
+model Like {
+  id        String   @id @default(cuid())
+  userId    String
+  postId    String
+  createdAt DateTime @default(now())
+
+  // Relations
+  user      User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  post      Post @relation(fields: [postId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, postId])
+  @@map("likes")
+}
+
+model ClassroomLike {
+  id          String   @id @default(cuid())
+  userId      String
+  classroomId String
+  createdAt   DateTime @default(now())
+
+  // Relations
+  user        User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  classroom   Classroom @relation(fields: [classroomId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, classroomId])
+  @@map("classroom_likes")
+}
+
+model File {
+  id           String   @id @default(cuid())
+  title        String
+  description  String?
+  fileName     String
+  originalName String
+  mimeType     String
+  size         Int
+  url          String
+  cloudinaryId String?
+  type         String   // IMAGE, VIDEO, AUDIO, DOCUMENT, OTHER
+  categoryId   String?
+  tags         String   // JSON string
+  uploadedById String?
+  viewsCount   Int      @default(0)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  // Relations
+  category     Category? @relation(fields: [categoryId], references: [id], onDelete: SetNull)
+  uploadedBy   User?     @relation(fields: [uploadedById], references: [id], onDelete: SetNull)
+  
+  @@map("files")
+}
+
+model Category {
+  id          String   @id @default(cuid())
+  name        String   @unique
+  description String?
+  color       String?  @default("#3B82F6")
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  // Relations
+  files       File[]
+  
+  @@map("categories")
+}
