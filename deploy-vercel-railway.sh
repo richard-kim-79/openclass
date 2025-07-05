@@ -64,13 +64,13 @@ fi
 
 # 백엔드 배포
 log_info "백엔드를 Railway에 배포합니다..."
-railway up --service openclass-backend
+railway up
 
 if [ $? -eq 0 ]; then
     log_success "Railway 백엔드 배포 완료!"
     
     # Railway URL 가져오기
-    BACKEND_URL=$(railway domain --service openclass-backend)
+    BACKEND_URL=$(railway domain)
     log_info "백엔드 URL: $BACKEND_URL"
 else
     log_error "Railway 배포 실패!"
@@ -119,7 +119,7 @@ log_info "4. 배포 후 설정 중..."
 
 # CORS 설정 업데이트
 log_info "백엔드 CORS 설정을 업데이트합니다..."
-railway variables set CORS_ORIGIN="$FRONTEND_URL" --service openclass-backend
+railway variables set CORS_ORIGIN="$FRONTEND_URL"
 
 # 환경 변수 설정 안내
 log_warning "다음 환경 변수들을 Railway에서 설정해주세요:"
