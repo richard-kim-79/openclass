@@ -2,22 +2,10 @@
 builder = "nixpacks"
 
 [deploy]
-startCommand = "npm start"
-healthcheckPath = "/health"
-healthcheckTimeout = 300
-restartPolicyType = "on_failure"
-
-[build]
-builder = "nixpacks"
-
-[deploy]
-startCommand = "npm start"
+startCommand = "cd backend && npm start"
 healthcheckPath = "/health"
 healthcheckTimeout = 300
 restartPolicyType = "on_failure"
 
 [environments.production.variables]
 NODE_ENV = "production"
-PORT = "5001"
-POSTGRES_EXTENSIONS = "vector"
-SHARED_PRELOAD_LIBRARIES = "vector"
